@@ -16,7 +16,12 @@ app.post('/run-command', (req, res) => {
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive',
   });
-  const child = spawn('./run', [command, ...args]);
+  const flatArgs = [];
+  args.forEach(arg => {
+    const parts = arg.split(' ');
+    flatArgs.push(...parts);
+  });
+  const child = spawn('./run', [command, ...flatArgs]);
   child.stdout.on('data', (data) => {
     res.write(`data: ${data.toString()}` + '\n\n');
   });
