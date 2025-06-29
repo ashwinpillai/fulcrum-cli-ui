@@ -118,7 +118,7 @@ function App() {
     setOutput('');
     try {
       const args = Object.entries(fields).map(([k, v]) => `--${k} ${v}`);
-      const res = await fetch('http://localhost:5001/run-command', {
+      const res = await fetch('https://fulcrum-cli-ui.onrender.com/run-command', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
