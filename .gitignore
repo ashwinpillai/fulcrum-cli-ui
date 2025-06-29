@@ -1,0 +1,11 @@
+node_modules/
+build/
+dist/
+npm-debug.log
+test.db
+bench/*.db
+output.log
+tmp/
+fulcrum
+reports/
+logs/
