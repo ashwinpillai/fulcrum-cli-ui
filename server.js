@@ -21,7 +21,8 @@ app.post('/run-command', (req, res) => {
     const parts = arg.split(' ');
     flatArgs.push(...parts);
   });
-  const child = spawn('./run', [command, ...flatArgs]);
+  const commandParts = command.split(' ');
+  const child = spawn('./run', [...commandParts, ...flatArgs]);
   child.stdout.on('data', (data) => {
     res.write(`data: ${data.toString()}` + '\n\n');
   });
