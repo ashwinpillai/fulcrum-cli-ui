@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { exec } from 'child_process';
+import { spawn } from 'child_process';
 
 const app = express();
 app.use(cors());
@@ -11,13 +11,21 @@ app.post('/run-command', (req, res) => {
   if (!command) {
     return res.status(400).json({ error: 'No command provided' });
   }
-  // Construct the full command string
-  const fullCommand = `./run ${command} ${args.join(' ')}`;
-  exec(fullCommand, (error, stdout, stderr) => {
-    if (error) {
-      return res.status(500).json({ error: stderr || error.message });
-    }
-    res.json({ output: stdout });
+  res.set({
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+  });
+  const child = spawn('./run', [command, ...args]);
+  child.stdout.on('data', (data) => {
+    res.write(`data: ${data.toString()}` + '\n\n');
+  });
+  child.stderr.on('data', (data) => {
+    res.write(`data: ${data.toString()}` + '\n\n');
+  });
+  child.on('close', (code) => {
+    res.write(`event: end\ndata: Command exited with code ${code}\n\n`);
+    res.end();
   });
 });
 

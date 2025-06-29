@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import fulcrumLogo from './fulcrum-logo.png';
 
 interface CommandField {
@@ -97,6 +97,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState<{ type: 'error'; message: string } | null>(null);
   const [output, setOutput] = useState<string>('');
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   const handleFieldChange = (name: string, value: string) => {
     setFields((prev) => ({ ...prev, [name]: value }));
@@ -116,26 +117,40 @@ function App() {
     setLoading(true);
     setModal(null);
     setOutput('');
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
     try {
-      const args = Object.entries(fields).map(([k, v]) => `--${k} ${v}`);
-      const res = await fetch('https://fulcrum-cli-ui.onrender.com/run-command', {
+      const response = await fetch('https://fulcrum-cli-ui.onrender.com/run-command', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          command,
-          args,
-        }),
+        body: JSON.stringify({ command, args: Object.entries(fields).map(([k, v]) => `--${k} ${v}`) }),
       });
-      const data = await res.json();
-      if (res.ok && data.output) {
-        setOutput(data.output);
-      } else {
-        setModal({ type: 'error', message: data.error || 'Unknown error occurred.' });
+      if (!response.body) {
+        setModal({ type: 'error', message: 'Streaming not supported in this browser.' });
+        setLoading(false);
+        return;
       }
+      const reader = response.body.getReader();
+      let decoder = new TextDecoder();
+      let fullOutput = '';
+      function read() {
+        reader.read().then(({ done, value }) => {
+          if (done) {
+            setLoading(false);
+            return;
+          }
+          const chunk = decoder.decode(value, { stream: true });
+          fullOutput += chunk;
+          setOutput(prev => prev + chunk);
+          read();
+        });
+      }
+      read();
     } catch (err) {
       setModal({ type: 'error', message: 'Error connecting to server.' });
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
