@@ -134,7 +134,7 @@ function App() {
       const reader = response.body.getReader();
       let decoder = new TextDecoder();
       let fullOutput = '';
-      function read() {
+      const read = () => {
         reader.read().then(({ done, value }) => {
           if (done) {
             setLoading(false);
@@ -145,7 +145,7 @@ function App() {
           setOutput(prev => prev + chunk);
           read();
         });
-      }
+      };
       read();
     } catch (err) {
       setModal({ type: 'error', message: 'Error connecting to server.' });
