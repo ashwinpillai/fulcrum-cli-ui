@@ -68,7 +68,7 @@ export async function updateCalculationsRecursive(
   const { value, error } = await getSandbox().execute({
     code: SCRIPT,
     globals: { runtimeVariables },
-    timeout: 2000,
+    timeout: 600000,
   });
 
   if (error) {
