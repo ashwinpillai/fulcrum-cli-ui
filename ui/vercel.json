@@ -1,4 +1,5 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "headers": [
     {
       "source": "/(.*)",
@@ -34,13 +35,6 @@
       ]
     }
   ],
-  "redirects": [
-    {
-      "source": "/http:/(.*)",
-      "destination": "/https:/$1",
-      "permanent": true
-    }
-  ],
   "rewrites": [
     {
       "source": "/activity-log",
@@ -50,13 +44,5 @@
       "source": "/command-output",
       "destination": "/command-output.html"
     }
-  ],
-  "functions": {
-    "app/api/**/*.js": {
-      "maxDuration": 30
-    }
-  },
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
