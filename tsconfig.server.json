@@ -1,9 +1,9 @@
 {
-  "include": ["src/**/*", "server.ts"],
+  "include": ["./server.ts"],
   "compilerOptions": {
     "target": "es2020",
     "sourceMap": true,
-    "outDir": "dist",
+    "outDir": ".",
     "strict": false,
     "lib": ["esnext"],
     "module": "esnext",
@@ -11,6 +11,7 @@
     "allowJs": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "noImplicitAny": false
+    "noImplicitAny": false,
+    "skipLibCheck": true
   }
 }

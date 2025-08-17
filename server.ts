@@ -48,6 +48,10 @@ app.post('/run-command', (req: Request<{}, {}, CommandRequest>, res: Response) =
 });
 
 const PORT: number = parseInt(process.env.PORT || '10000');
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+const HOST: string = process.env.HOST || '0.0.0.0';
+
+app.listen(PORT, HOST, () => {
+  console.log(`🚀 Fulcrum CLI Backend Server running on ${HOST}:${PORT}`);
+  console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔗 Health check: http://${HOST}:${PORT}/run-command`);
 });
