@@ -31,7 +31,7 @@ export async function shutdownSandbox() {
 export async function updateCalculations(record: Core.Record, context: Context) {
   log.info('updating calculations for record', record.id);
 
-  await updateCalculationsRecursive(record, record, record.formValues, context);
+  await updateCalculationsRecursive(record, record as any, record.formValues, context);
 }
 
 function environmentFromEnvironmentVariables(): ExpressionEnvironment {
@@ -53,7 +53,7 @@ function environmentFromEnvironmentVariables(): ExpressionEnvironment {
 
 export async function updateCalculationsRecursive(
   record: Core.Record,
-  feature: Core.Feature,
+  feature: any,
   formValues: Core.FormValues,
   context: Context,
 ) {
@@ -152,7 +152,7 @@ const DEFAULT_ENVIRONMENT: ExpressionEnvironment = {
 
 function getFeatureVariables(
   record: Core.Record,
-  feature: Core.Feature,
+  feature: any,
   formValues: Core.FormValues,
   context: Context,
   environment: ExpressionEnvironment,
@@ -187,8 +187,8 @@ function getFeatureVariables(
     recordGeometry: record.geometryAsGeoJSON,
 
     recordAltitude: record.altitude,
-    recordVerticalAccuracy: record.recordVerticalAccuracy,
-    recordHorizontalAccuracy: record.recordHorizontalAccuracy,
+    recordVerticalAccuracy: record.verticalAccuracy,
+    recordHorizontalAccuracy: record.horizontalAccuracy,
 
     recordCreatedLatitude: record.createdLatitude,
     recordCreatedLongitude: record.createdLongitude,
