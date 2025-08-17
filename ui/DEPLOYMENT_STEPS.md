@@ -61,6 +61,7 @@ REACT_APP_ENABLE_TEMPORARY_ACCESS=true
 2. **Environment Variables** - Must be set in Vercel dashboard
 3. **API Endpoints** - Update with your actual backend URLs
 4. **CORS** - Ensure your backend allows your Vercel domain
+5. **Content Security Policy** - The updated vercel.json needs to be deployed for external API calls to work
 
 ## 🔗 Next Steps
 
@@ -70,3 +71,27 @@ REACT_APP_ENABLE_TEMPORARY_ACCESS=true
 4. Monitor security logs
 
 Your app is now ready for production deployment! 🎉
+
+## 🔧 Troubleshooting
+
+### CSP (Content Security Policy) Errors
+If you see errors like:
+```
+Fetch API cannot load https://api.ipify.org/?format=json. Refused to connect because it violates the document's Content Security Policy.
+```
+
+**Solution:** The updated `vercel.json` needs to be deployed. After pushing to GitHub, redeploy on Vercel.
+
+### Backend Connection Errors
+If you see errors like:
+```
+Cannot connect to backend server. Please ensure your backend is deployed and running on Render.
+```
+
+**Solution:** 
+1. Deploy your backend to Render first
+2. Set `REACT_APP_API_BASE_URL` in Vercel environment variables
+3. Ensure your backend allows CORS from your Vercel domain
+
+### IP Geolocation Disabled
+Currently, IP geolocation is temporarily disabled to avoid CSP issues. It will be re-enabled once the updated `vercel.json` is deployed.

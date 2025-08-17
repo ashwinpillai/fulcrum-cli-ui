@@ -133,13 +133,46 @@ interface ActivityLogEntry {
 // Function to get IP address and location
 const getIPAndLocation = async (): Promise<{ ip: string; location: string }> => {
   try {
+    // Check if IP geolocation is enabled
+    if (process.env.REACT_APP_ENABLE_IP_GEOLOCATION === 'false') {
+      return { ip: 'Disabled', location: 'Disabled' };
+    }
+
+    // For now, skip IP geolocation to avoid CSP issues
+    // This will be re-enabled once vercel.json is deployed
+    return { ip: 'Local', location: 'Local' };
+
+    // Uncomment this section once vercel.json is deployed with proper CSP
+    /*
     // Get IP address
-    const ipResponse = await fetch('https://api.ipify.org?format=json');
+    const ipResponse = await fetch('https://api.ipify.org?format=json', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+      mode: 'cors'
+    });
+
+    if (!ipResponse.ok) {
+      throw new Error(`IP API responded with status: ${ipResponse.status}`);
+    }
+
     const ipData = await ipResponse.json();
     const ip = ipData.ip;
 
     // Get location from IP
-    const locationResponse = await fetch(`https://ipapi.co/${ip}/json/`);
+    const locationResponse = await fetch(`https://ipapi.co/${ip}/json/`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+      mode: 'cors'
+    });
+
+    if (!locationResponse.ok) {
+      throw new Error(`Location API responded with status: ${locationResponse.status}`);
+    }
+
     const locationData = await locationResponse.json();
 
     if (locationData.city && locationData.region) {
@@ -158,9 +191,11 @@ const getIPAndLocation = async (): Promise<{ ip: string; location: string }> => 
         location: 'Unknown'
       };
     }
+    */
   } catch (error) {
+    console.warn('IP geolocation failed, using fallback:', error);
     return {
-      ip: '127.0.0.1',
+      ip: 'Local',
       location: 'Local'
     };
   }
@@ -235,15 +270,28 @@ function App() {
 
   // Function to add activity log entry
   const addActivityLog = async (entry: Omit<ActivityLogEntry, 'id' | 'timestamp' | 'ipAddress' | 'location'>) => {
-    const { ip, location } = await getIPAndLocation();
-    const newEntry: ActivityLogEntry = {
-      ...entry,
-      id: Date.now().toString(),
-      timestamp: new Date(),
-      ipAddress: ip,
-      location: location,
-    };
-    setActivityLog(prev => [newEntry, ...prev]); // Add to beginning of array
+    try {
+      const { ip, location } = await getIPAndLocation();
+      const newEntry: ActivityLogEntry = {
+        ...entry,
+        id: Date.now().toString(),
+        timestamp: new Date(),
+        ipAddress: ip,
+        location: location,
+      };
+      setActivityLog(prev => [newEntry, ...prev]); // Add to beginning of array
+    } catch (error) {
+      // Fallback if IP geolocation fails
+      const newEntry: ActivityLogEntry = {
+        ...entry,
+        id: Date.now().toString(),
+        timestamp: new Date(),
+        ipAddress: 'Unknown',
+        location: 'Unknown',
+      };
+      setActivityLog(prev => [newEntry, ...prev]);
+      console.warn('IP geolocation failed, using fallback:', error);
+    }
   };
 
   const [fields, setFields] = useState<FieldsState>(() => {
@@ -512,11 +560,26 @@ function App() {
         return `--${k} ${v}`;
       });
 
-      const response = await fetch('https://fulcrum-cli-ui.onrender.com/run-command', {
+      // Use environment variable for backend URL, fallback to localhost for development
+      const backendUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001';
+      const response = await fetch(`${backendUrl}/run-command`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ command, args }),
       });
+      if (!response.ok) {
+        if (response.status === 404) {
+          setModal({ type: 'error', message: 'Backend server not found. Please ensure your backend is running on Render.' });
+        } else if (response.status === 500) {
+          setModal({ type: 'error', message: 'Backend server error. Please check your backend logs.' });
+        } else {
+          setModal({ type: 'error', message: `Backend error: ${response.status} ${response.statusText}` });
+        }
+        setLoading(false);
+        clearInterval(progressInterval);
+        return;
+      }
+
       if (!response.body) {
         setModal({ type: 'error', message: 'Streaming not supported in this browser.' });
         setLoading(false);
@@ -542,7 +605,18 @@ function App() {
       };
       read();
     } catch (err) {
-      setModal({ type: 'error', message: 'Error connecting to server.' });
+      console.error('Error running command:', err);
+      let errorMessage = 'Error connecting to server.';
+
+      if (err instanceof Error) {
+        if (err.message.includes('Failed to fetch')) {
+          errorMessage = 'Cannot connect to backend server. Please ensure your backend is deployed and running on Render.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+
+      setModal({ type: 'error', message: errorMessage });
       setLoading(false);
       clearInterval(progressInterval);
     }
