@@ -3,6 +3,7 @@ services:
     name: fulcrum-cli-backend
     env: node
     plan: free
+    nodeVersion: 18
     buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
