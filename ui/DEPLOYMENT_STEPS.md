@@ -52,6 +52,9 @@ REACT_APP_ENABLE_TEMPORARY_ACCESS=true
 - X-Content-Type-Options: nosniff
 - X-XSS-Protection: 1; mode=block
 - Content Security Policy
+  - Allows localhost connections for development
+  - Allows Fulcrum API endpoints
+  - Allows IP geolocation services
 - Strict Transport Security
 - Referrer Policy
 
@@ -81,6 +84,14 @@ Fetch API cannot load https://api.ipify.org/?format=json. Refused to connect bec
 ```
 
 **Solution:** The updated `vercel.json` needs to be deployed. After pushing to GitHub, redeploy on Vercel.
+
+**For Development (localhost):**
+If you're testing locally and see CSP errors with localhost:
+```
+Refused to connect to 'http://localhost:3001/run-command' because it violates Content Security Policy
+```
+
+**Solution:** The updated `vercel.json` now allows localhost connections for development.
 
 ### Backend Connection Errors
 If you see errors like:

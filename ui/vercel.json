@@ -30,7 +30,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.fulcrumapp.com https://api.fulcrumapp-eu.com https://api.fulcrumapp-au.com https://api.fulcrumapp-ca.com https://api.ipify.org https://ipapi.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' http://localhost:* https://api.fulcrumapp.com https://api.fulcrumapp-eu.com https://api.fulcrumapp-au.com https://api.fulcrumapp-ca.com https://api.ipify.org https://ipapi.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
         }
       ]
     }
