@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fulcrum CLI - Command Output</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        /* Animated background elements */
+        .bg-element {
+            position: absolute;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            filter: blur(40px);
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        .bg-element:nth-child(1) {
+            top: 10%;
+            left: 10%;
+            width: 200px;
+            height: 200px;
+        }
+        
+        .bg-element:nth-child(2) {
+            top: 60%;
+            right: 15%;
+            width: 150px;
+            height: 150px;
+            animation-delay: 2s;
+            animation-direction: reverse;
+        }
+        
+        .bg-element:nth-child(3) {
+            bottom: 20%;
+            left: 20%;
+            width: 100px;
+            height: 100px;
+            animation-delay: 4s;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-20px) rotate(120deg); }
+            66% { transform: translateY(10px) rotate(240deg); }
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.15);
+            overflow: hidden;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #e11d48, #be185d);
+            color: white;
+            padding: 20px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .close-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .close-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+        
+        .content {
+            padding: 24px;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .output-container {
+            background: #1a202c;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #e2e8f0;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .output-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a202c;
+        }
+        
+        .copy-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .copy-btn:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+        
+        .copy-btn:active {
+            transform: translateY(0);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+        
+        .empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #e11d48;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Syntax highlighting for JSON */
+        .json-key { color: #93c5fd; }
+        .json-string { color: #86efac; }
+        .json-number { color: #fbbf24; }
+        .json-boolean { color: #f472b6; }
+        .json-null { color: #a78bfa; }
+    </style>
+</head>
+<body>
+    <!-- Background elements -->
+    <div class="bg-element"></div>
+    <div class="bg-element"></div>
+    <div class="bg-element"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>📋 Command Output</h1>
+            <button class="close-btn" onclick="window.close()">✕ Close</button>
+        </div>
+        
+        <div class="content">
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Waiting for command output...</p>
+            </div>
+            
+            <div id="empty" class="empty-state" style="display: none;">
+                <h3>No Output Yet</h3>
+                <p>Command output will appear here when you run a command.</p>
+            </div>
+            
+            <div id="output-content" style="display: none;">
+                <div class="output-header">
+                    <div class="output-title">Command Output</div>
+                    <button class="copy-btn" onclick="copyOutput()">📋 Copy</button>
+                </div>
+                <div id="output-text" class="output-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to format JSON with syntax highlighting
+        function formatJSON(jsonString) {
+            try {
+                const obj = JSON.parse(jsonString);
+                const formatted = JSON.stringify(obj, null, 2);
+                return formatted.replace(/(".*?":)/g, '<span class="json-key">$1</span>')
+                              .replace(/(".*?")/g, '<span class="json-string">$1</span>')
+                              .replace(/\b(\d+\.?\d*)\b/g, '<span class="json-number">$1</span>')
+                              .replace(/\b(true|false)\b/g, '<span class="json-boolean">$1</span>')
+                              .replace(/\bnull\b/g, '<span class="json-null">null</span>');
+            } catch (e) {
+                return jsonString;
+            }
+        }
+        
+        // Function to copy output to clipboard
+        function copyOutput() {
+            const outputText = document.getElementById('output-text').textContent;
+            navigator.clipboard.writeText(outputText).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                btn.style.background = '#10b981';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '#3b82f6';
+                }, 2000);
+            });
+        }
+        
+        // Function to display output
+        function displayOutput(output) {
+            if (!output || output.trim() === '') {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('empty').style.display = 'block';
+                return;
+            }
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('output-content').style.display = 'block';
+            
+            const outputElement = document.getElementById('output-text');
+            
+            // Check if output contains JSON
+            if (output.includes('{') && output.includes('}')) {
+                outputElement.innerHTML = formatJSON(output);
+            } else {
+                outputElement.textContent = output;
+            }
+        }
+        
+        // Listen for messages from the main app
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'COMMAND_OUTPUT') {
+                displayOutput(event.data.output);
+            }
+        });
+        
+        // Try to load from localStorage as fallback
+        window.addEventListener('load', function() {
+            const saved = localStorage.getItem('fulcrum_command_output');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    if (data.output && data.timestamp) {
+                        // Check if output is recent (within last 5 minutes)
+                        const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
+                        if (data.timestamp > fiveMinutesAgo) {
+                            displayOutput(data.output);
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error parsing saved output:', e);
+                }
+            }
+            
+            // Show loading state
+            document.getElementById('loading').style.display = 'block';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fulcrum CLI - Activity Log</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #fff 60%, #e11d48 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #e11d48, #be185d);
+            color: white;
+            padding: 24px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+        }
+        
+        .export-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .export-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+        
+        .content {
+            padding: 32px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        th {
+            background: #f9fafb;
+            padding: 16px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        td {
+            padding: 16px 12px;
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: top;
+        }
+        
+        tr:hover {
+            background: #f9fafb;
+        }
+        
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            color: white;
+            display: inline-block;
+        }
+        
+        .badge-admin {
+            background: #3b82f6;
+        }
+        
+        .badge-temporary {
+            background: #f59e0b;
+        }
+        
+        .badge-success {
+            background: #10b981;
+        }
+        
+        .badge-failed {
+            background: #ef4444;
+        }
+        
+        .ip-address {
+            font-family: monospace;
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+        
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #e11d48;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Activity Log</h1>
+            <button class="export-btn" onclick="exportToCSV()">📥 Export CSV</button>
+        </div>
+        
+        <div class="content">
+            <!-- Search and Filter Controls -->
+            <div class="controls" style="margin-bottom: 24px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+                <div class="search-box">
+                    <input 
+                        type="text" 
+                        id="email-search" 
+                        placeholder="Search by email..." 
+                        style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; width: 200px;"
+                    >
+                </div>
+                
+                <div class="date-filter">
+                    <label style="margin-right: 8px; font-weight: 500; color: #374151;">From:</label>
+                    <input 
+                        type="date" 
+                        id="date-from" 
+                        style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; margin-right: 16px;"
+                    >
+                    
+                    <label style="margin-right: 8px; font-weight: 500; color: #374151;">To:</label>
+                    <input 
+                        type="date" 
+                        id="date-to" 
+                        style="padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; margin-right: 16px;"
+                    >
+                </div>
+                
+                <button 
+                    onclick="clearFilters()" 
+                    style="padding: 8px 16px; background: #6b7280; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;"
+                >
+                    Clear Filters
+                </button>
+            </div>
+            
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading activity log...</p>
+            </div>
+            
+            <div id="empty" class="empty-state" style="display: none;">
+                <h3>No Activity Recorded</h3>
+                <p>Activity log will appear here as users interact with the system.</p>
+            </div>
+            
+            <div id="table-container" class="table-container" style="display: none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Email</th>
+                            <th>Type</th>
+                            <th>Action</th>
+                            <th>Command</th>
+                            <th>IP Address</th>
+                            <th>Location</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to format timestamp
+        function formatTimestamp(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString();
+        }
+        
+        // Function to export to CSV
+        function exportToCSV() {
+            const table = document.querySelector('table');
+            if (!table) return;
+            
+            const rows = Array.from(table.querySelectorAll('tr'));
+            const csvContent = rows.map(row => {
+                return Array.from(row.querySelectorAll('th, td'))
+                    .map(cell => {
+                        // Remove HTML tags and get text content
+                        const text = cell.textContent || cell.innerText || '';
+                        // Escape quotes and wrap in quotes if contains comma
+                        return `"${text.replace(/"/g, '""')}"`;
+                    })
+                    .join(',');
+            }).join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `activity_log_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // Function to load activity log
+        function loadActivityLog() {
+            // Try to load from localStorage as fallback
+            const saved = localStorage.getItem('fulcrum_activity_log');
+            if (saved) {
+                try {
+                    const activities = JSON.parse(saved);
+                    if (activities && activities.length > 0) {
+                        displayActivityLog(activities);
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Error parsing saved activity log:', e);
+                }
+            }
+            
+            // Show empty state if no data
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('empty').style.display = 'block';
+        }
+        
+        // Load activity log when page loads
+        window.addEventListener('load', loadActivityLog);
+        
+        // Listen for messages from the main app
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'ACTIVITY_LOG_DATA') {
+                displayActivityLog(event.data.activities);
+            }
+        });
+        
+        // Store original activities for filtering
+        let originalActivities = [];
+        
+        // Function to display activity log data
+        function displayActivityLog(activities) {
+            if (!activities || activities.length === 0) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('empty').style.display = 'block';
+                return;
+            }
+            
+            originalActivities = activities;
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('table-container').style.display = 'block';
+            
+            renderTable(activities);
+            setupEventListeners();
+        }
+        
+        // Function to render table with filtered data
+        function renderTable(activities) {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            
+            if (activities.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px; color: #6b7280;">No activities found matching your filters</td></tr>';
+                return;
+            }
+            
+            activities.forEach(entry => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatTimestamp(entry.timestamp)}</td>
+                    <td>${entry.email}</td>
+                    <td><span class="badge badge-${entry.accessType}">${entry.accessType}</span></td>
+                    <td>${entry.action}</td>
+                    <td>${entry.command || '-'}</td>
+                    <td><span class="ip-address">${entry.ipAddress}</span></td>
+                    <td>${entry.location}</td>
+                    <td><span class="badge badge-${entry.status}">${entry.status}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Function to setup event listeners for search and filter
+        function setupEventListeners() {
+            const emailSearch = document.getElementById('email-search');
+            const dateFrom = document.getElementById('date-from');
+            const dateTo = document.getElementById('date-to');
+            
+            emailSearch.addEventListener('input', applyFilters);
+            dateFrom.addEventListener('change', applyFilters);
+            dateTo.addEventListener('change', applyFilters);
+        }
+        
+        // Function to apply filters
+        function applyFilters() {
+            const emailSearch = document.getElementById('email-search').value.toLowerCase();
+            const dateFrom = document.getElementById('date-from').value;
+            const dateTo = document.getElementById('date-to').value;
+            
+            let filtered = originalActivities.filter(entry => {
+                // Email filter
+                if (emailSearch && !entry.email.toLowerCase().includes(emailSearch)) {
+                    return false;
+                }
+                
+                // Date filter
+                if (dateFrom || dateTo) {
+                    const entryDate = new Date(entry.timestamp);
+                    const entryDateStr = entryDate.toISOString().split('T')[0];
+                    
+                    if (dateFrom && entryDateStr < dateFrom) {
+                        return false;
+                    }
+                    if (dateTo && entryDateStr > dateTo) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            renderTable(filtered);
+        }
+        
+        // Function to clear all filters
+        function clearFilters() {
+            document.getElementById('email-search').value = '';
+            document.getElementById('date-from').value = '';
+            document.getElementById('date-to').value = '';
+            renderTable(originalActivities);
+        }
+    </script>
+</body>
+</html>
