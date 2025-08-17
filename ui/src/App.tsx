@@ -560,8 +560,8 @@ function App() {
         return `--${k} ${v}`;
       });
 
-      // Use environment variable for backend URL, fallback to localhost for development
-      const backendUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001';
+      // Use environment variable for backend URL, fallback to Render backend for production
+      const backendUrl = process.env.REACT_APP_API_BASE_URL || 'https://fulcrum-cli-ui.onrender.com';
       const response = await fetch(`${backendUrl}/run-command`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
